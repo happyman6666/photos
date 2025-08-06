@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的密码相册</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .photo-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 1rem;
+            }
+            .photo-item {
+                transition: transform 0.3s ease;
+                cursor: pointer;
+            }
+            .photo-item:hover {
+                transform: scale(1.03);
+            }
+            .hidden-photos {
+                display: none;
+            }
+            .password-modal {
+                animation: fadeIn 0.3s ease forwards;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .animate-shake {
+                animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            }
+            @keyframes shake {
+                10%, 90% { transform: translateX(-1px); }
+                20%, 80% { transform: translateX(2px); }
+                30%, 50%, 70% { transform: translateX(-3px); }
+                40%, 60% { transform: translateX(3px); }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 标题区域 -->
+    <header class="py-6 bg-white shadow-sm">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-2xl font-bold text-gray-800">我的密码相册</h1>
+            <p class="text-gray-500 mt-1">部分照片需要密码查看</p>
+        </div>
+    </header>
+
+    <!-- 密码提示 -->
+    <div class="container mx-auto px-4 py-4 text-center">
+        <button id="unlockBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+            <i class="fa fa-lock mr-1"></i> 解锁隐藏照片
+        </button>
+        <button id="lockBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors hidden ml-2">
+            <i class="fa fa-lock mr-1"></i> 重新锁定
+        </button>
+    </div>
+
+    <!-- 照片展示区 -->
+    <main class="container mx-auto px-4 py-4">
+        <!-- 公开照片区 -->
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">公开照片</h2>
+        <div class="photo-grid public-photos">
+            <!-- 公开照片 1 -->
+            <div class="photo-item rounded-lg overflow-hidden shadow">
+                <img src="https://picsum.photos/seed/public1/600/600" alt="山脉风景，远处有积雪的山峰" class="w-full h-auto">
+            </div>
+
+            <!-- 公开照片 2 -->
+            <div class="photo-item rounded-lg overflow-hidden shadow">
+                <img src="https://picsum.photos/seed/public2/600/600" alt="城市天际线，黄昏时分的建筑群" class="w-full h-auto">
+            </div>
+
+            <!-- 公开照片 3 -->
+            <div class="photo-item rounded-lg overflow-hidden shadow">
+                <img src="https://picsum.photos/seed/public3/600/600" alt="盛开的粉色花朵，背景是绿色叶子" class="w-full h-auto">
+            </div>
+
+            <!-- 公开照片 4 -->
+            <div class="photo-item rounded-lg overflow-hidden shadow">
+                <img src="https://picsum.photos/seed/public4/600/600" alt="海滩日落，金色的阳光洒在海面上" class="w-full h-auto">
+            </div>
+        </div>
+
+        <!-- 隐藏照片区 (默认不显示) -->
+        <div id="hiddenSection" class="mt-10 hidden-photos">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">
+                <i class="fa fa-unlock-alt text-green-500 mr-2"></i>隐藏照片
+            </h2>
+            <div class="photo-grid">
+                <!-- 隐藏照片 1 -->
+                <div class="photo-item rounded-lg overflow-hidden shadow">
+                    <img src="https://picsum.photos/seed/hidden1/600/600" alt="家庭聚会合影，一群人开心地笑着" class="w-full h-auto">
+                </div>
+
+                <!-- 隐藏照片 2 -->
+                <div class="photo-item rounded-lg overflow-hidden shadow">
+                    <img src="https://picsum.photos/seed/hidden2/600/600" alt="生日派对场景，有蛋糕和气球" class="w-full h-auto">
+                </div>
+
+                <!-- 隐藏照片 3
+                <div class="photo-item rounded-lg overflow-hidden shadow">
+                    <img src="https://picsum.photos/seed/hidden3/600/600" alt="私人旅行照片，展示独特的风景" class="w-full h-auto"> -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 密码输入模态框 (默认隐藏) -->
+    <div id="passwordModal" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4">
+        <div class="password-modal bg-white rounded-xl p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">解锁隐藏照片</h3>
+            <p class="text-gray-600 mb-4 text-center">请输入密码以查看隐藏的照片</p>
+            
+            <div class="mb-4">
+                <input type="password" id="passwordInput" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="输入密码">
+                <p id="errorMsg" class="text-red-500 text-sm mt-2 hidden">密码错误，请重试</p>
+            </div>
+            
+            <div class="flex gap-3">
+                <button id="cancelBtn" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg transition-colors">
+                    取消
+                </button>
+                <button id="submitBtn" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-colors">
+                    确认
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片查看模态框 -->
+    <div id="photoModal" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4">
+        <button id="closePhotoModal" class="absolute top-4 right-4 text-white text-2xl hover:text-gray-300">
+            <i class="fa fa-times"></i>
+        </button>
+        <img id="modalImage" src="" alt="照片大图预览" class="max-h-[90vh] max-w-full">
+    </div>
+
+    <script>
+        // 配置 - 这里可以修改密码
+        const CORRECT_PASSWORD = "250714"; // 默认密码，建议修改
+        const PASSWORD_STORAGE_KEY = "album_access_granted";
+        
+        // 锁定按钮元素
+        const lockBtn = document.getElementById('lockBtn');
+
+        // DOM元素
+        const passwordModal = document.getElementById('passwordModal');
+        const photoModal = document.getElementById('photoModal');
+        const modalImage = document.getElementById('modalImage');
+        const hiddenSection = document.getElementById('hiddenSection');
+        const passwordInput = document.getElementById('passwordInput');
+        const errorMsg = document.getElementById('errorMsg');
+        const unlockBtn = document.getElementById('unlockBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const closePhotoModal = document.getElementById('closePhotoModal');
+        const photos = document.querySelectorAll('.photo-item img');
+
+        // 检查是否已经解锁过 - 现在刷新页面会重新上锁
+        function checkAccess() {
+            // 使用临时变量替代sessionStorage，刷新页面后自动失效
+            const hasAccess = window.unlockedState || false;
+            if (hasAccess) {
+                showHiddenPhotos();
+            } else {
+                hideHiddenPhotos();
+            }
+            return hasAccess;
+        }
+
+        // 显示隐藏照片
+        function showHiddenPhotos() {
+            hiddenSection.classList.remove('hidden-photos');
+            unlockBtn.classList.add('hidden');
+            lockBtn.classList.remove('hidden');
+            // 存储在window对象的属性中，刷新页面会丢失
+            window.unlockedState = true;
+        }
+
+        // 隐藏照片并重置状态
+        function hideHiddenPhotos() {
+            hiddenSection.classList.add('hidden-photos');
+            unlockBtn.classList.remove('hidden');
+            lockBtn.classList.add('hidden');
+            
+            // 清除解锁状态
+            window.unlockedState = false;
+        }
+
+        // 打开密码模态框
+        unlockBtn.addEventListener('click', () => {
+            if (!checkAccess()) {
+                passwordModal.classList.remove('hidden');
+                passwordModal.classList.add('flex');
+                passwordInput.value = '';
+                errorMsg.classList.add('hidden');
+                passwordInput.classList.remove('border-red-500');
+                passwordInput.focus();
+                document.body.style.overflow = 'hidden';
+            }
+        });
+
+        // 重新锁定功能
+        lockBtn.addEventListener('click', () => {
+            hideHiddenPhotos();
+        });
+
+        // 关闭密码模态框
+        function closePasswordModal() {
+            passwordModal.classList.add('hidden');
+            passwordModal.classList.remove('flex');
+            document.body.style.overflow = 'auto';
+        }
+
+        cancelBtn.addEventListener('click', closePasswordModal);
+
+        // 密码验证
+        submitBtn.addEventListener('click', () => {
+            const password = passwordInput.value.trim();
+            if (password === CORRECT_PASSWORD) {
+                closePasswordModal();
+                showHiddenPhotos();
+            } else {
+                errorMsg.classList.remove('hidden');
+                passwordInput.classList.add('border-red-500', 'animate-shake');
+                setTimeout(() => {
+                    passwordInput.classList.remove('animate-shake');
+                }, 500);
+            }
+        });
+
+        // 支持按Enter键提交密码
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                submitBtn.click();
+            }
+        });
+
+        // 图片查看功能
+        photos.forEach(photo => {
+            photo.addEventListener('click', () => {
+                modalImage.src = photo.src;
+                modalImage.alt = photo.alt;
+                photoModal.classList.remove('hidden');
+                photoModal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            });
+        });
+
+        // 关闭图片查看模态框
+        closePhotoModal.addEventListener('click', () => {
+            photoModal.classList.add('hidden');
+            photoModal.classList.remove('flex');
+            document.body.style.overflow = 'auto';
+        });
+
+        // 点击模态框背景关闭图片查看
+        photoModal.addEventListener('click', (e) => {
+            if (e.target === photoModal) {
+                photoModal.classList.add('hidden');
+                photoModal.classList.remove('flex');
+                document.body.style.overflow = 'auto';
+            }
+        });
+
+        // 按ESC键关闭任何模态框
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (!passwordModal.classList.contains('hidden')) {
+                    closePasswordModal();
+                }
+                if (!photoModal.classList.contains('hidden')) {
+                    photoModal.classList.add('hidden');
+                    photoModal.classList.remove('flex');
+                    document.body.style.overflow = 'auto';
+                }
+            }
+        });
+
+        // 页面加载时检查是否已解锁
+        window.addEventListener('load', checkAccess);
+    </script>
+</body>
+</html>
