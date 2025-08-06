@@ -3,36 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>^^</title>
+    <title>^_^</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6', // 主色调：明亮的蓝色
+                        secondary: '#10B981', // 辅助色：绿色（用于解锁状态）
+                        accent: '#F59E0B', // 强调色：琥珀色（用于锁定状态）
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
     <style type="text/tailwindcss">
         @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
             .photo-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                gap: 1rem;
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 1.5rem;
             }
             .photo-item {
-                transition: transform 0.3s ease;
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                 cursor: pointer;
+                position: relative;
+                overflow: hidden;
+                border-radius: 0.75rem;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
             }
             .photo-item:hover {
-                transform: scale(1.03);
+                transform: translateY(-8px) scale(1.02);
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            }
+            .photo-item::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%);
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                pointer-events: none;
+            }
+            .photo-item:hover::after {
+                opacity: 1;
+            }
+            .photo-caption {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                padding: 1rem;
+                color: white;
+                transform: translateY(100%);
+                transition: transform 0.3s ease;
+                z-index: 10;
+            }
+            .photo-item:hover .photo-caption {
+                transform: translateY(0);
             }
             .hidden-photos {
                 display: none;
             }
             .password-modal {
-                animation: fadeIn 0.3s ease forwards;
+                animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+            .photo-placeholder {
+                background-color: #E2E8F0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #94A3B8;
+                aspect-ratio: 4/3;
+            }
+            .photo-loading {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(255, 255, 255, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: opacity 0.5s ease;
+                z-index: 5;
+            }
+            .photo-loading.hidden {
+                opacity: 0;
+                pointer-events: none;
+            }
+            .section-fade-in {
+                animation: sectionFadeIn 0.6s ease-out forwards;
             }
             @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(-20px); }
-                to { opacity: 1; transform: translateY(0); }
+                from { opacity: 0; transform: translateY(-20px) scale(0.98); }
+                to { opacity: 1; transform: translateY(0) scale(1); }
             }
-            .animate-shake {
-                animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            @keyframes sectionFadeIn {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
             }
             @keyframes shake {
                 10%, 90% { transform: translateX(-1px); }
@@ -40,133 +123,254 @@
                 30%, 50%, 70% { transform: translateX(-3px); }
                 40%, 60% { transform: translateX(3px); }
             }
+            .animate-shake {
+                animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            }
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+            .spin {
+                animation: spin 1s linear infinite;
+            }
+            .btn-pop {
+                transition: transform 0.2s ease;
+            }
+            .btn-pop:active {
+                transform: scale(0.95);
+            }
+            .photo-zoom {
+                transition: transform 0.5s ease;
+            }
+            .photo-zoom:hover {
+                transform: scale(1.05);
+            }
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen font-sans text-dark">
+    <!-- 顶部装饰条 -->
+    <div class="h-1 bg-gradient-to-r from-primary via-secondary to-accent"></div>
+
     <!-- 标题区域 -->
-    <header class="py-6 bg-white shadow-sm">
+    <header class="py-8 bg-white/80 backdrop-blur-md shadow-sm">
         <div class="container mx-auto px-4 text-center">
-            <h1 class="text-2xl font-bold text-gray-800">我的密码相册</h1>
-            <p class="text-gray-500 mt-1">部分照片需要密码查看</p>
+            <h1 class="text-[clamp(1.8rem,5vw,2.5rem)] font-bold text-dark relative inline-block">
+                我的密码相册
+                <span class="absolute -bottom-2 left-0 w-full h-1 bg-primary/30 transform scale-x-0 transition-transform duration-300 origin-left"></span>
+            </h1>
+            <p class="text-gray-600 mt-3 max-w-md mx-auto">珍藏美好瞬间，部分照片需要密码保护</p>
         </div>
     </header>
 
     <!-- 密码提示 -->
-    <div class="container mx-auto px-4 py-4 text-center">
-        <button id="unlockBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
-            <i class="fa fa-lock mr-1"></i> 解锁隐藏照片
+    <div class="container mx-auto px-4 py-6 text-center">
+        <button id="unlockBtn" class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg transition-all duration-300 flex items-center justify-center mx-auto gap-2 shadow-md btn-pop group">
+            <i class="fa fa-lock transition-transform duration-300 group-hover:rotate-12"></i>
+            <span>解锁隐藏照片</span>
         </button>
-        <button id="lockBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors hidden ml-2">
-            <i class="fa fa-lock mr-1"></i> 重新锁定
+        <button id="lockBtn" class="bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-lg transition-all duration-300 hidden flex items-center justify-center mx-auto gap-2 shadow-md btn-pop mt-3 group">
+            <i class="fa fa-lock transition-transform duration-300 group-hover:rotate-12"></i>
+            <span>重新锁定</span>
         </button>
     </div>
 
     <!-- 照片展示区 -->
-    <main class="container mx-auto px-4 py-4">
+    <main class="container mx-auto px-4 py-6 max-w-7xl">
         <!-- 公开照片区 -->
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">公开照片</h2>
-        <div class="photo-grid public-photos">
-            <!-- 公开照片 1 -->
-            <div class="photo-item rounded-lg overflow-hidden shadow">
-                <img src="https://pub-78055f0772ae4645904ad7fcdfb8880a.r2.dev/1.jpg" alt="1" class="w-full h-auto">
-            </div>
+        <div class="mb-10">
+            <h2 class="text-[clamp(1.3rem,3vw,1.8rem)] font-semibold text-dark mb-6 inline-flex items-center">
+                <i class="fa fa-image text-primary mr-3"></i>
+                公开照片
+                <span class="ml-3 h-px bg-gray-200 flex-grow"></span>
+            </h2>
+            <div class="photo-grid public-photos section-fade-in">
+                <!-- 公开照片 1 -->
+                <div class="photo-item">
+                    <div class="photo-loading">
+                        <i class="fa fa-circle-o-notch spin text-primary text-xl"></i>
+                    </div>
+                    <img src="https://pub-d7ea30f53f6a4f258f6666ab8375b26a.r2.dev/1.jpg" alt="1" class="w-full h-auto object-cover aspect-[4/3] photo-zoom" onload="this.previousElementSibling.classList.add('hidden')" onerror="this.src='https://picsum.photos/seed/error/600/400'; this.previousElementSibling.classList.add('hidden')">
+                    <div class="photo-caption">
+                        <h3 class="font-medium">2</h3>
+                        <p class="text-sm text-gray-200 mt-1">3</p>
+                    </div>
+                </div>
 
-            <!-- 公开照片 2 -->
-            <div class="photo-item rounded-lg overflow-hidden shadow">
-                <img src="https://pub-78055f0772ae4645904ad7fcdfb8880a.r2.dev/2.jpg" alt="1" class="w-full h-auto">
-            </div>
+                <!-- 公开照片 2 -->
+                <div class="photo-item">
+                    <div class="photo-loading">
+                        <i class="fa fa-circle-o-notch spin text-primary text-xl"></i>
+                    </div>
+                    <img src="https://picsum.photos/seed/photo2/600/400" alt="城市天际线" class="w-full h-auto object-cover aspect-[4/3] photo-zoom" onload="this.previousElementSibling.classList.add('hidden')" onerror="this.src='https://picsum.photos/seed/error/600/400'; this.previousElementSibling.classList.add('hidden')">
+                    <div class="photo-caption">
+                        <h3 class="font-medium">城市天际线</h3>
+                        <p class="text-sm text-gray-200 mt-1">繁华都市的黄昏</p>
+                    </div>
+                </div>
 
-            <!-- 公开照片 3 -->
-            <div class="photo-item rounded-lg overflow-hidden shadow">
-                <img src="https://pub-78055f0772ae4645904ad7fcdfb8880a.r2.dev/3.jpg" alt="1" class="w-full h-auto">
-            </div>
+                <!-- 公开照片 3 -->
+                <div class="photo-item">
+                    <div class="photo-loading">
+                        <i class="fa fa-circle-o-notch spin text-primary text-xl"></i>
+                    </div>
+                    <img src="https://picsum.photos/seed/photo3/600/400" alt="森林小径" class="w-full h-auto object-cover aspect-[4/3] photo-zoom" onload="this.previousElementSibling.classList.add('hidden')" onerror="this.src='https://picsum.photos/seed/error/600/400'; this.previousElementSibling.classList.add('hidden')">
+                    <div class="photo-caption">
+                        <h3 class="font-medium">森林小径</h3>
+                        <p class="text-sm text-gray-200 mt-1">林间漫步的惬意</p>
+                    </div>
+                </div>
 
-            <!-- 公开照片 4 -->
-            <div class="photo-item rounded-lg overflow-hidden shadow">
-                <img src="https://pub-78055f0772ae4645904ad7fcdfb8880a.r2.dev/4.jpg" alt="1" class="w-full h-auto">
+                <!-- 公开照片 4 -->
+                <div class="photo-item">
+                    <div class="photo-loading">
+                        <i class="fa fa-circle-o-notch spin text-primary text-xl"></i>
+                    </div>
+                    <img src="https://picsum.photos/seed/photo4/600/400" alt="海滩日落" class="w-full h-auto object-cover aspect-[4/3] photo-zoom" onload="this.previousElementSibling.classList.add('hidden')" onerror="this.src='https://picsum.photos/seed/error/600/400'; this.previousElementSibling.classList.add('hidden')">
+                    <div class="photo-caption">
+                        <h3 class="font-medium">海滩日落</h3>
+                        <p class="text-sm text-gray-200 mt-1">金色的黄昏时刻</p>
+                    </div>
+                </div>
+                
+                <!-- 公开照片 5 -->
+                <div class="photo-item">
+                    <div class="photo-loading">
+                        <i class="fa fa-circle-o-notch spin text-primary text-xl"></i>
+                    </div>
+                    <img src="https://picsum.photos/seed/photo5/600/400" alt="山脉云海" class="w-full h-auto object-cover aspect-[4/3] photo-zoom" onload="this.previousElementSibling.classList.add('hidden')" onerror="this.src='https://picsum.photos/seed/error/600/400'; this.previousElementSibling.classList.add('hidden')">
+                    <div class="photo-caption">
+                        <h3 class="font-medium">山脉云海</h3>
+                        <p class="text-sm text-gray-200 mt-1">仙境般的自然奇观</p>
+                    </div>
+                </div>
+                
+                <!-- 公开照片 6 -->
+                <div class="photo-item">
+                    <div class="photo-loading">
+                        <i class="fa fa-circle-o-notch spin text-primary text-xl"></i>
+                    </div>
+                    <img src="https://picsum.photos/seed/photo6/600/400" alt="花卉特写" class="w-full h-auto object-cover aspect-[4/3] photo-zoom" onload="this.previousElementSibling.classList.add('hidden')" onerror="this.src='https://picsum.photos/seed/error/600/400'; this.previousElementSibling.classList.add('hidden')">
+                    <div class="photo-caption">
+                        <h3 class="font-medium">花卉特写</h3>
+                        <p class="text-sm text-gray-200 mt-1">自然的绚丽色彩</p>
+                    </div>
+                </div>
             </div>
-            
-            <!-- 公开照片 4 -->
-            <div class="photo-item rounded-lg overflow-hidden shadow">
-                <img src="https://pub-78055f0772ae4645904ad7fcdfb8880a.r2.dev/5.jpg" alt="1" class="w-full h-auto">
-            </div>
-            
-            <!-- 公开照片 4 -->
-            <div class="photo-item rounded-lg overflow-hidden shadow">
-                <img src="https://pub-78055f0772ae4645904ad7fcdfb8880a.r2.dev/6.jpg" alt="1" class="w-full h-auto">
-            </div>
-
         </div>
 
         <!-- 隐藏照片区 (默认不显示) -->
         <div id="hiddenSection" class="mt-10 hidden-photos">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">
-                <i class="fa fa-unlock-alt text-green-500 mr-2"></i>隐藏照片
+            <h2 class="text-[clamp(1.3rem,3vw,1.8rem)] font-semibold text-dark mb-6 inline-flex items-center">
+                <i class="fa fa-unlock-alt text-secondary mr-3"></i>
+                隐藏照片
+                <span class="ml-3 h-px bg-gray-200 flex-grow"></span>
             </h2>
-            <div class="photo-grid">
+            <div class="photo-grid section-fade-in">
                 <!-- 隐藏照片 1 -->
-                <div class="photo-item rounded-lg overflow-hidden shadow">
-                    <img src="https://pub-78055f0772ae4645904ad7fcdfb8880a.r2.dev/i1.jpg" alt="1" class="w-full h-auto">
+                <div class="photo-item">
+                    <div class="photo-loading">
+                        <i class="fa fa-circle-o-notch spin text-secondary text-xl"></i>
+                    </div>
+                    <img src="https://picsum.photos/seed/hidden1/600/400" alt="私人聚会" class="w-full h-auto object-cover aspect-[4/3] photo-zoom" onload="this.previousElementSibling.classList.add('hidden')" onerror="this.src='https://picsum.photos/seed/error/600/400'; this.previousElementSibling.classList.add('hidden')">
+                    <div class="photo-caption">
+                        <h3 class="font-medium">私人聚会</h3>
+                        <p class="text-sm text-gray-200 mt-1">难忘的欢乐时光</p>
+                    </div>
                 </div>
 
                 <!-- 隐藏照片 2 -->
-                <div class="photo-item rounded-lg overflow-hidden shadow">
-                    <img src="https://pub-78055f0772ae4645904ad7fcdfb8880a.r2.dev/i2.jpg" alt="1" class="w-full h-auto">
+                <div class="photo-item">
+                    <div class="photo-loading">
+                        <i class="fa fa-circle-o-notch spin text-secondary text-xl"></i>
+                    </div>
+                    <img src="https://picsum.photos/seed/hidden2/600/400" alt="家庭合影" class="w-full h-auto object-cover aspect-[4/3] photo-zoom" onload="this.previousElementSibling.classList.add('hidden')" onerror="this.src='https://picsum.photos/seed/error/600/400'; this.previousElementSibling.classList.add('hidden')">
+                    <div class="photo-caption">
+                        <h3 class="font-medium">家庭合影</h3>
+                        <p class="text-sm text-gray-200 mt-1">温馨的家庭时刻</p>
+                    </div>
                 </div>
 
                 <!-- 隐藏照片 3 -->
-                <div class="photo-item rounded-lg overflow-hidden shadow">
-                    <img src="https://pub-78055f0772ae4645904ad7fcdfb8880a.r2.dev/i3.jpg" alt="1" class="w-full h-auto">
+                <div class="photo-item">
+                    <div class="photo-loading">
+                        <i class="fa fa-circle-o-notch spin text-secondary text-xl"></i>
+                    </div>
+                    <img src="https://picsum.photos/seed/hidden3/600/400" alt="特殊纪念日" class="w-full h-auto object-cover aspect-[4/3] photo-zoom" onload="this.previousElementSibling.classList.add('hidden')" onerror="this.src='https://picsum.photos/seed/error/600/400'; this.previousElementSibling.classList.add('hidden')">
+                    <div class="photo-caption">
+                        <h3 class="font-medium">特殊纪念日</h3>
+                        <p class="text-sm text-gray-200 mt-1">值得铭记的日子</p>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
+    <!-- 页脚 -->
+    <footer class="mt-16 py-6 bg-white/80 backdrop-blur-md border-t border-gray-200">
+        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+            <p>© 2023 我的密码相册 | 保护您的珍贵回忆</p>
+        </div>
+    </footer>
+
     <!-- 密码输入模态框 (默认隐藏) -->
-    <div id="passwordModal" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4">
-        <div class="password-modal bg-white rounded-xl p-6 w-full max-w-md">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">解锁隐藏照片</h3>
-            <p class="text-gray-600 mb-4 text-center">请输入密码以查看隐藏的照片</p>
+    <div id="passwordModal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
+        <div class="password-modal bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl relative overflow-hidden">
+            <!-- 模态框顶部装饰 -->
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-secondary"></div>
             
-            <div class="mb-4">
-                <input type="password" id="passwordInput" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       placeholder="输入密码">
-                <p id="errorMsg" class="text-red-500 text-sm mt-2 hidden">密码错误，请重试</p>
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa fa-lock text-primary text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-dark mb-2">解锁隐藏照片</h3>
+                <p class="text-gray-500">请输入密码以查看受保护的照片</p>
             </div>
             
-            <div class="flex gap-3">
-                <button id="cancelBtn" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg transition-colors">
+            <div class="mb-6">
+                <input type="password" id="passwordInput" 
+                       class="w-full px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                       placeholder="输入密码">
+                <p id="errorMsg" class="text-red-500 text-sm mt-2 hidden flex items-center">
+                    <i class="fa fa-exclamation-circle mr-1"></i> 密码错误，请重试
+                </p>
+            </div>
+            
+            <div class="flex gap-4">
+                <button id="cancelBtn" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 rounded-lg transition-colors font-medium btn-pop">
                     取消
                 </button>
-                <button id="submitBtn" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-colors">
-                    确认
+                <button id="submitBtn" class="flex-1 bg-primary hover:bg-primary/90 text-white py-3 rounded-lg transition-colors font-medium btn-pop">
+                    确认解锁
                 </button>
             </div>
         </div>
     </div>
 
     <!-- 图片查看模态框 -->
-    <div id="photoModal" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4">
-        <button id="closePhotoModal" class="absolute top-4 right-4 text-white text-2xl hover:text-gray-300">
+    <div id="photoModal" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4 transition-opacity duration-300">
+        <button id="closePhotoModal" class="absolute top-6 right-6 text-white text-2xl hover:text-gray-300 transition-colors z-10 bg-black/30 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm hover:bg-black/50">
             <i class="fa fa-times"></i>
         </button>
-        <img id="modalImage" src="" alt="照片大图预览" class="max-h-[90vh] max-w-full">
+        <div class="max-h-[90vh] max-w-full relative">
+            <img id="modalImage" src="" alt="照片大图预览" class="max-h-[90vh] max-w-full object-contain rounded-lg shadow-2xl">
+            <div class="absolute bottom-4 left-4 right-4 bg-black/50 text-white px-4 py-2 rounded-full text-sm backdrop-blur-sm transform translate-y-10 opacity-0 transition-all duration-300" id="modalCaptionContainer">
+                <h3 id="modalImageTitle" class="font-medium"></h3>
+                <p id="modalImageDesc" class="text-gray-200 text-xs mt-0.5"></p>
+            </div>
+        </div>
     </div>
 
     <script>
         // 配置 - 这里可以修改密码
         const CORRECT_PASSWORD = "bigsbzhanghaifeng"; // 默认密码，建议修改
-        const PASSWORD_STORAGE_KEY = "album_access_granted";
         
-        // 锁定按钮元素
-        const lockBtn = document.getElementById('lockBtn');
-
         // DOM元素
         const passwordModal = document.getElementById('passwordModal');
         const photoModal = document.getElementById('photoModal');
         const modalImage = document.getElementById('modalImage');
+        const modalImageTitle = document.getElementById('modalImageTitle');
+        const modalImageDesc = document.getElementById('modalImageDesc');
+        const modalCaptionContainer = document.getElementById('modalCaptionContainer');
         const hiddenSection = document.getElementById('hiddenSection');
         const passwordInput = document.getElementById('passwordInput');
         const errorMsg = document.getElementById('errorMsg');
@@ -175,10 +379,17 @@
         const cancelBtn = document.getElementById('cancelBtn');
         const closePhotoModal = document.getElementById('closePhotoModal');
         const photos = document.querySelectorAll('.photo-item img');
+        const titleUnderline = document.querySelector('h1 span');
 
-        // 检查是否已经解锁过 - 现在刷新页面会重新上锁
+        // 页面加载后为标题添加动画效果
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                titleUnderline.classList.add('transform', 'scale-x-100');
+            }, 300);
+        });
+
+        // 检查是否已经解锁过
         function checkAccess() {
-            // 使用临时变量替代sessionStorage，刷新页面后自动失效
             const hasAccess = window.unlockedState || false;
             if (hasAccess) {
                 showHiddenPhotos();
@@ -192,8 +403,19 @@
         function showHiddenPhotos() {
             hiddenSection.classList.remove('hidden-photos');
             unlockBtn.classList.add('hidden');
-            lockBtn.classList.remove('hidden');
-            // 存储在window对象的属性中，刷新页面会丢失
+            document.getElementById('lockBtn').classList.remove('hidden');
+            
+            // 添加显示动画
+            hiddenSection.style.opacity = '0';
+            hiddenSection.style.transform = 'translateY(20px)';
+            hiddenSection.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+            
+            setTimeout(() => {
+                hiddenSection.style.opacity = '1';
+                hiddenSection.style.transform = 'translateY(0)';
+            }, 50);
+            
+            // 存储解锁状态
             window.unlockedState = true;
         }
 
@@ -201,7 +423,7 @@
         function hideHiddenPhotos() {
             hiddenSection.classList.add('hidden-photos');
             unlockBtn.classList.remove('hidden');
-            lockBtn.classList.add('hidden');
+            document.getElementById('lockBtn').classList.add('hidden');
             
             // 清除解锁状态
             window.unlockedState = false;
@@ -215,21 +437,42 @@
                 passwordInput.value = '';
                 errorMsg.classList.add('hidden');
                 passwordInput.classList.remove('border-red-500');
+                
+                // 动画显示模态框背景
+                setTimeout(() => {
+                    passwordModal.style.opacity = '1';
+                }, 10);
+                
                 passwordInput.focus();
                 document.body.style.overflow = 'hidden';
             }
         });
 
         // 重新锁定功能
-        lockBtn.addEventListener('click', () => {
-            hideHiddenPhotos();
+        document.getElementById('lockBtn').addEventListener('click', () => {
+            // 添加隐藏动画
+            hiddenSection.style.opacity = '1';
+            hiddenSection.style.transform = 'translateY(0)';
+            
+            setTimeout(() => {
+                hiddenSection.style.opacity = '0';
+                hiddenSection.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    hideHiddenPhotos();
+                }, 600);
+            }, 10);
         });
 
         // 关闭密码模态框
         function closePasswordModal() {
-            passwordModal.classList.add('hidden');
-            passwordModal.classList.remove('flex');
-            document.body.style.overflow = 'auto';
+            passwordModal.style.opacity = '0';
+            
+            setTimeout(() => {
+                passwordModal.classList.add('hidden');
+                passwordModal.classList.remove('flex');
+                document.body.style.overflow = 'auto';
+            }, 300);
         }
 
         cancelBtn.addEventListener('click', closePasswordModal);
@@ -238,11 +481,28 @@
         submitBtn.addEventListener('click', () => {
             const password = passwordInput.value.trim();
             if (password === CORRECT_PASSWORD) {
-                closePasswordModal();
-                showHiddenPhotos();
+                // 添加成功反馈动画
+                passwordInput.classList.add('border-green-500');
+                passwordInput.classList.remove('border-red-500');
+                
+                // 添加关闭动画
+                const modalContent = passwordModal.querySelector('.password-modal');
+                modalContent.style.transform = 'scale(1)';
+                
+                setTimeout(() => {
+                    modalContent.style.transform = 'scale(0.95)';
+                    modalContent.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        closePasswordModal();
+                        showHiddenPhotos();
+                    }, 300);
+                }, 500);
             } else {
                 errorMsg.classList.remove('hidden');
                 passwordInput.classList.add('border-red-500', 'animate-shake');
+                passwordInput.classList.remove('border-green-500');
+                
                 setTimeout(() => {
                     passwordInput.classList.remove('animate-shake');
                 }, 500);
@@ -259,29 +519,54 @@
         // 图片查看功能
         photos.forEach(photo => {
             photo.addEventListener('click', () => {
+                // 获取图片标题和描述
+                const caption = photo.nextElementSibling;
+                const title = caption ? caption.querySelector('h3')?.textContent : '照片预览';
+                const desc = caption ? caption.querySelector('p')?.textContent : '';
+                
                 modalImage.src = photo.src;
-                modalImage.alt = photo.alt;
+                modalImageTitle.textContent = title;
+                modalImageDesc.textContent = desc;
+                
                 photoModal.classList.remove('hidden');
                 photoModal.classList.add('flex');
                 document.body.style.overflow = 'hidden';
+                
+                // 淡入动画
+                setTimeout(() => {
+                    photoModal.style.opacity = '1';
+                }, 10);
+                
+                // 图片加载完成后显示标题
+                modalImage.onload = () => {
+                    setTimeout(() => {
+                        modalCaptionContainer.classList.remove('translate-y-10', 'opacity-0');
+                    }, 300);
+                };
             });
         });
 
         // 关闭图片查看模态框
-        closePhotoModal.addEventListener('click', () => {
-            photoModal.classList.add('hidden');
-            photoModal.classList.remove('flex');
-            document.body.style.overflow = 'auto';
-        });
+        closePhotoModal.addEventListener('click', closePhotoViewer);
 
         // 点击模态框背景关闭图片查看
         photoModal.addEventListener('click', (e) => {
             if (e.target === photoModal) {
+                closePhotoViewer();
+            }
+        });
+        
+        // 关闭图片查看器的函数
+        function closePhotoViewer() {
+            modalCaptionContainer.classList.add('translate-y-10', 'opacity-0');
+            photoModal.style.opacity = '0';
+            
+            setTimeout(() => {
                 photoModal.classList.add('hidden');
                 photoModal.classList.remove('flex');
                 document.body.style.overflow = 'auto';
-            }
-        });
+            }, 300);
+        }
 
         // 按ESC键关闭任何模态框
         document.addEventListener('keydown', (e) => {
@@ -290,9 +575,7 @@
                     closePasswordModal();
                 }
                 if (!photoModal.classList.contains('hidden')) {
-                    photoModal.classList.add('hidden');
-                    photoModal.classList.remove('flex');
-                    document.body.style.overflow = 'auto';
+                    closePhotoViewer();
                 }
             }
         });
@@ -302,14 +585,4 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
+    
